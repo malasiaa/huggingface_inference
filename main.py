@@ -1,6 +1,6 @@
 import streamlit as st
 from transformers import pipeline
-
+import json
 
 # URL of the Hugging Face favicon
 hugging_face_favicon_url = "https://huggingface.co/favicon.ico"
@@ -62,7 +62,14 @@ if user_input != default_message:
     
     if task_type == 'Text Generation':
         classifier = pipeline("text-generation", model="gpt2")
-        results = classifier([user_input])['generated_text']
+        # max_length: Controls the maximum length of the generated text.
+        # num_return_sequences: Specifies the number of generated sequences.
+        # temperature: Controls the randomness of the output. Lower values make the output more deterministic.
+        # Adjusting temperature to make the output more focused
+        # Increasing top_k to reduce randomness
+        # Adjusting top_p to control the cumulative probability
+        # Setting no_repeat_ngram_size to avoid repetition
+        results = classifier([user_input], max_length=100, num_return_sequences=1, temperature=0.3, top_k=50, top_p=0.95, no_repeat_ngram_size=2)
 
-        #Display the generated text
-        st.write(f"**Text**: {results}")
+        generated_text = results[0][0]['generated_text']
+        st.write(f"**Text**: {generated_text}...")
