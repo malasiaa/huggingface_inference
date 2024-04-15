@@ -3,7 +3,7 @@ from transformers import pipeline
 import json
 
 # URL of the Hugging Face favicon
-hugging_face_favicon_url = "https://huggingface.co/favicon.ico"
+hugging_face_favicon_url = "https://huggingface.co/front/assets/homepage/hugs-mobile.svg"
 
 # Config page
 st.set_page_config(
@@ -17,28 +17,41 @@ st.set_page_config(
 st.markdown(
     f"""
     <h1 style="display: flex; align-items: center;">
-        Inference Page <img src="{hugging_face_favicon_url}" style="height: 50px; margin-right: 10px;">
+        Inference Page <img src="{hugging_face_favicon_url}" style="height: 80px; margin-right: 10px;">
     </h1>
     """,
     unsafe_allow_html=True,
 )
 #Selectbox to choose the type of task
-task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation'])
+task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization'])
 default_message = "Please insert your sentence HERE..."
 
 # Add a text input space
 user_input = st.text_input("Enter your text here:", default_message )
 
 
-
 # You can then use the user_input variable in your code
 # For example, to display the input text
 if user_input == default_message and task_type == 'Sentiment Analysis':
     st.markdown("""
-    <span style="font-size: 15px; color: #D3D3D1;">
-    For multiple separate them with backslash ej: Rice is good. \\ Rice is disgusting. \\ I don't like pasta.
-    </span>
-    """, unsafe_allow_html=True)
+        <span style="font-size: 15px; color: #D3D3D1;">
+        For multiple separate them with backslash ej: Rice is good. \\ Rice is disgusting. \\ I don't like pasta.
+        </span>
+        """, unsafe_allow_html=True)
+    
+if user_input == default_message and task_type == 'Text Generation':
+    st.markdown("""
+        <span style="font-size: 15px; color: #D3D3D1;">
+        Maximum input characters: 100
+        </span>
+        """, unsafe_allow_html=True)
+
+if user_input == default_message and task_type == 'Summarization':
+    st.markdown("""
+        <span style="font-size: 15px; color: #D3D3D1;">
+        Maximum input characters: 350
+        </span>
+        """, unsafe_allow_html=True)
 
 if user_input != default_message:
     if task_type == 'Sentiment Analysis':
@@ -62,10 +75,16 @@ if user_input != default_message:
                 message = "Negative"
             else:
                 message = "Unknown"
-            st.write(sentences[sentence])
+            if len(results) >= 2:
+                st.write(sentences[sentence])
             # Display the message and score in two lines with "Classification" in bold
             st.write(f"**Sentiment**: {message}.     **Score**: {score}")
             sentence += 1
+
+    if task_type == 'Zero-shot classification':
+        classifier = pipeline("zero-shot-classification", model="sentence-transformers/all-MiniLM-L6-v2")
+        results = classifier(user_input, candidate_labels=["education", "politics", "business"])
+        st.write(f"**Category**: {results}.     **Score**:")
 
     if task_type == 'Text Generation':
         classifier = pipeline("text-generation", model="gpt2")
@@ -77,8 +96,17 @@ if user_input != default_message:
         # Increasing top_k to reduce randomness.
         # Adjusting top_p to control the cumulative probability.
         # Setting no_repeat_ngram_size to avoid repetition.
-        results = classifier([user_input], max_length=150, num_return_sequences=1, temperature=0.3, top_k=50, top_p=0.95, no_repeat_ngram_size=1)
-
+        results = classifier([user_input], max_length=100, num_return_sequences=1, temperature=0.3, top_k=50, top_p=0.95, no_repeat_ngram_size=1)
         generated_text = results[0][0]['generated_text']
         st.write(f"**Text**: {generated_text}...")
 
+    if task_type == 'Summarization':
+
+        classifier = pipeline("summarization", model="gpt2")
+        results = classifier([user_input], max_length=350, num_return_sequences=1, temperature=0.3, top_k=50, top_p=0.95, no_repeat_ngram_size=1)
+        
+        #to exclude the text generated after the last ".". Otherwise will not finish the sentence
+        #summary_text = results[0]['summary_text'].split('.')
+        #st.write(f"**Here's the summary**: {'.'.join(summary_text[:-1])}.")
+
+        st.write(f"**Here's the summary**: {result[0]['summary_text']}...")
