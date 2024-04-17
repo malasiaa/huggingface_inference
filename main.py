@@ -23,7 +23,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 #Selectbox to choose the type of task
-task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization'])
+task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization', 'Question Answering'])
 default_message = "Please insert your sentence HERE..."
 
 # Add a text input space
@@ -53,6 +53,9 @@ if user_input == default_message or user_input == "":
                 Powered by facebook/bart
                 </span>
                 """, unsafe_allow_html=True)
+        if task_type == 'Question Answering':
+            context = st.text_input("Enter your context:", default_message )
+
 
 
 if user_input != default_message:
@@ -85,8 +88,8 @@ if user_input != default_message:
                 sentence += 1
 
         if task_type == 'Zero-shot classification':
-            classifier = pipeline("zero-shot-classification", model="sentence-transformers/all-MiniLM-L6-v2")
-            results = classifier(user_input, candidate_labels=["education", "politics", "business"])
+            classifier = pipeline("zero-shot-classification", model="federicopascual/finetuning-sentiment-model-3000-samples")
+            results = classifier(user_input, candidate_labels=["education", "politics", "meteorology"])
             st.write(f"**Category**: {results}.     **Score**:")
 
         if task_type == 'Text Generation':
@@ -108,3 +111,10 @@ if user_input != default_message:
             classifier = pipeline("summarization", model="facebook/bart-large-cnn")
             results = classifier([user_input], min_new_tokens=160, max_new_tokens=560, temperature=0.7)
             st.write(f"**Here's the summary**: {results[0]['summary_text']}...")
+
+        if task_type == 'Question Answering':
+
+            classifier = pipeline("question-answering", model="deepset/roberta-base-squad2")
+            context = st.text_input("Enter your context:", default_message
+            results = classifier(question=user_input, context = context)
+            st.write(f"**Answer**: {results}...")
