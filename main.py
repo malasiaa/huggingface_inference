@@ -1,6 +1,5 @@
 import streamlit as st
 from transformers import pipeline
-import json
 
 # URL of the Hugging Face favicon
 hugging_face_favicon_url = "https://huggingface.co/front/assets/homepage/hugs-mobile.svg"
@@ -29,9 +28,9 @@ default_message = "Please insert your sentence HERE..."
 # Add a text input space
 user_input = st.text_input("Enter your text here:", default_message )
 
+context_global = []
 
-# You can then use the user_input variable in your code
-# For example, to display the input text
+# equal to default message or "", will appear the below
 if user_input == default_message or user_input == "":
         if task_type == 'Sentiment Analysis':
             st.markdown("""
@@ -45,18 +44,10 @@ if user_input == default_message or user_input == "":
                 Powered by ramblings of LLMs
                 </span>
                 """, unsafe_allow_html=True)
-        if task_type == 'Summarization':
-            st.markdown("""
-                <span style="font-size: 15px; color: #D3D3D1;">
-                Maximum output tokens: 300 
-                            
-                Powered by facebook/bart
-                </span>
-                """, unsafe_allow_html=True)
         if task_type == 'Question Answering':
+
             context = st.text_input("Enter your context:", default_message )
-
-
+            context_global.append(context)
 
 if user_input != default_message:
     if  user_input != "":
@@ -115,6 +106,9 @@ if user_input != default_message:
         if task_type == 'Question Answering':
 
             classifier = pipeline("question-answering", model="deepset/roberta-base-squad2")
-            context = st.text_input("Enter your context:", default_message
-            results = classifier(question=user_input, context = context)
+            context = st.text_input("Enter your context:", "Please insert the context HERE...")
+            context_global.append(context)
+
+            results = classifier(question = user_input, 
+                                 context = context_global)
             st.write(f"**Answer**: {results}...")
