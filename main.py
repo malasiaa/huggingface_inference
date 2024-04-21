@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import pipeline
+from transformers import pipeline, Conversation
 
 # URL of the Hugging Face favicon
 hugging_face_favicon_url = "https://huggingface.co/front/assets/homepage/hugs-mobile.svg"
@@ -22,13 +22,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 #Selectbox to choose the type of task
-task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization', 'Question Answering'])
+task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization', 'Conversational'])
 default_message = "Please insert your sentence HERE..."
 
 # Add a text input space
 user_input = st.text_input("Enter your text here:", default_message )
 
-context_global = []
+role = []
+
+if task_type == 'Conversational':
+    role.append(st.text_input("What is the model role?", "Ex: You are a kind pirate."))
 
 # equal to default message or "", will appear the below
 if user_input == default_message or user_input == "":
@@ -44,11 +47,14 @@ if user_input == default_message or user_input == "":
                 Powered by ramblings of LLMs
                 </span>
                 """, unsafe_allow_html=True)
-        if task_type == 'Question Answering':
+        if task_type == 'Conversational':
+            st.markdown("""
+                <span style="font-size: 15px; color: #D3D3D1;">
+                Powered by ramblings of LLMs
+                </span>
+                """, unsafe_allow_html=True)
 
-            context = st.text_input("Enter your context:", default_message )
-            context_global.append(context)
-
+# when there's an input to be runned 
 if user_input != default_message:
     if  user_input != "":
         if task_type == 'Sentiment Analysis':
@@ -79,12 +85,12 @@ if user_input != default_message:
                 sentence += 1
 
         if task_type == 'Zero-shot classification':
-            classifier = pipeline("zero-shot-classification", model="federicopascual/finetuning-sentiment-model-3000-samples")
+            classifier = pipeline("zero-shot-classification", model="microsoft/DialoGPT-medium")
             results = classifier(user_input, candidate_labels=["education", "politics", "meteorology"])
             st.write(f"**Category**: {results}.     **Score**:")
 
         if task_type == 'Text Generation':
-            classifier = pipeline("text-generation", model="gpt2", temperature=0.9, max_new_tokens=100)
+            classifier = pipeline("text-generation", model="gpt2", temperature=0.9, min_new_tokens=60, max_new_tokens=150)
 
             # max_length: Controls the maximum length of the generated text.
             # num_return_sequences: Specifies the number of generated sequences.
@@ -99,16 +105,17 @@ if user_input != default_message:
 
         if task_type == 'Summarization':
 
-            classifier = pipeline("summarization", model="facebook/bart-large-cnn")
-            results = classifier([user_input], min_new_tokens=160, max_new_tokens=560, temperature=0.7)
+            classifier = pipeline("summarization", model="microsoft/DialoGPT-medium")
+            results = classifier([user_input], min_new_tokens=20, max_new_tokens=560, temperature=0.5)
             st.write(f"**Here's the summary**: {results[0]['summary_text']}...")
 
-        if task_type == 'Question Answering':
-
-            classifier = pipeline("question-answering", model="deepset/roberta-base-squad2")
-            context = st.text_input("Enter your context:", "Please insert the context HERE...")
-            context_global.append(context)
-
-            results = classifier(question = user_input, 
-                                 context = context_global)
-            st.write(f"**Answer**: {results}...")
+        if task_type == 'Conversational':
+           
+            classifier = pipeline("conversational", model="microsoft/DialoGPT-medium")
+            conversation = [
+                {"role": "system", "content": role},
+                {"role": "user", "content": user_input}
+            ]
+            results = classifier(conversation)
+            last_response = results[-1]['content']
+            st.write(f"**Answer**: {last_response}")
