@@ -64,7 +64,7 @@ if user_input == default_message or user_input == "":
         if task_type == 'Sentiment Analysis':
             st.markdown("""
                 <span style="font-size: 15px; color: #D3D3D1;">
-                For multiple separate them with backslash ej: Rice is good. \\ Rice is disgusting. \\ I don't like pasta.
+                For multiple please separate with backslash ej: Rice is good. \\ Rice is disgusting. \\ I don't like pasta.
                 </span>
                 """, unsafe_allow_html=True)
         if task_type == 'Text Generation':
@@ -139,6 +139,7 @@ if user_input != default_message:
                 {"role": "system", "content": role},
                 {"role": "user", "content": user_input}
             ]
-            results = classifier(conversation)
+            results = classifier(conversation, padding=True, truncation=True, return_tensors="pt", padding_side='left')
             last_response = results[-1]['content']
             st.write(f"**Answer**: {last_response}")
+    
