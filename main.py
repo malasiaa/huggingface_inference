@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from transformers import pipeline, Conversation
 
 # URL of the Hugging Face favicon
@@ -21,15 +22,42 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Check if the HF_HOME environment variable is set
+hf_home = os.getenv('HF_HOME')
+
+# If HF_HOME is set, use it as the base for the cache directory
+if hf_home:
+    cache_directory = os.path.join(hf_home, 'hub')
+else:
+    # If HF_HOME is not set, use the default location
+    cache_directory = os.path.expanduser('~/.cache/huggingface/hub')
+
+st.markdown(os.listdir(cache_directory))
+
+#function to verify if model weights are already in cache
+def check_model_cache (model):
+    if model in os.listdir(cache_directory):
+        pass
+    else:
+        st.markdown("""
+                    <span style="font-size: 15px; color: #D3D3D1;">
+                    Model run for the first time.
+
+                    Downloading model weights to cache.....
+                    </span>
+                    """, unsafe_allow_html=True)
+    
+    
 #Selectbox to choose the type of task
-task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Zero-shot classification', 'Summarization', 'Conversational'])
+task_type = st.selectbox('Select Task:', ['Sentiment Analysis', 'Text Generation', 'Summarization', 'Conversational'])
 default_message = "Please insert your sentence HERE..."
 
 # Add a text input space
 user_input = st.text_input("Enter your text here:", default_message )
 
+#creating a global variable to receive the model role for conversational tasks
 role = []
-
 if task_type == 'Conversational':
     role.append(st.text_input("What is the model role?", "Ex: You are a kind pirate."))
 
@@ -59,6 +87,7 @@ if user_input != default_message:
     if  user_input != "":
         if task_type == 'Sentiment Analysis':
             sentences = user_input.split('\\ ')
+            check_model_cache("models--federicopascual--finetuning-sentiment-model-3000-samples")
             classifier = pipeline("sentiment-analysis", model="federicopascual/finetuning-sentiment-model-3000-samples")
             results = classifier(sentences)
             # Output format is a dict [{'label': 'LABEL_1', 'score': 0.71...}]
@@ -84,13 +113,9 @@ if user_input != default_message:
                 st.write(f"**Sentiment**: {message}.     **Score**: {score}")
                 sentence += 1
 
-        if task_type == 'Zero-shot classification':
-            classifier = pipeline("zero-shot-classification", model="microsoft/DialoGPT-medium")
-            results = classifier(user_input, candidate_labels=["education", "politics", "meteorology"])
-            st.write(f"**Category**: {results}.     **Score**:")
-
         if task_type == 'Text Generation':
-            classifier = pipeline("text-generation", model="gpt2", temperature=0.9, min_new_tokens=60, max_new_tokens=150)
+            check_model_cache("models--gpt2")
+            classifier = pipeline("text-generation", model="gpt2", temperature=0.9, min_new_tokens=20, max_new_tokens=150)
 
             # max_length: Controls the maximum length of the generated text.
             # num_return_sequences: Specifies the number of generated sequences.
@@ -104,13 +129,13 @@ if user_input != default_message:
             st.write(f"**Text**: {generated_text}...")
 
         if task_type == 'Summarization':
-
+            check_model_cache ("models--microsoft--DialoGPT-medium")
             classifier = pipeline("summarization", model="microsoft/DialoGPT-medium")
             results = classifier([user_input], min_new_tokens=20, max_new_tokens=560, temperature=0.5)
             st.write(f"**Here's the summary**: {results[0]['summary_text']}...")
 
         if task_type == 'Conversational':
-           
+            check_model_cache ("models--microsoft--DialoGPT-medium")
             classifier = pipeline("conversational", model="microsoft/DialoGPT-medium")
             conversation = [
                 {"role": "system", "content": role},
