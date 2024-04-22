@@ -85,6 +85,7 @@ if user_input != default_message:
     if  user_input != "":
         if task_type == 'Sentiment Analysis':
             sentences = user_input.split('\\ ')
+            #verify if the model is already in cache
             check_model_cache("models--federicopascual--finetuning-sentiment-model-3000-samples")
             classifier = pipeline("sentiment-analysis", model="federicopascual/finetuning-sentiment-model-3000-samples")
             results = classifier(sentences)
@@ -112,6 +113,7 @@ if user_input != default_message:
                 sentence += 1
 
         if task_type == 'Text Generation':
+            #verify if the model is already in cache
             check_model_cache("models--gpt2")
             classifier = pipeline("text-generation", model="gpt2", temperature=0.9, min_new_tokens=20, max_new_tokens=150)
 
@@ -127,19 +129,20 @@ if user_input != default_message:
             st.write(f"**Text**: {generated_text}...")
 
         if task_type == 'Summarization':
+            #verify if the model is already in cache
             check_model_cache ("models--microsoft--DialoGPT-medium")
             classifier = pipeline("summarization", model="microsoft/DialoGPT-medium")
             results = classifier([user_input], min_new_tokens=20, max_new_tokens=560, temperature=0.5)
             st.write(f"**Here's the summary**: {results[0]['summary_text']}...")
 
         if task_type == 'Conversational':
+            #verify if the model is already in cache
             check_model_cache ("models--microsoft--DialoGPT-medium")
             classifier = pipeline("conversational", model="microsoft/DialoGPT-medium")
             conversation = [
                 {"role": "system", "content": role},
                 {"role": "user", "content": user_input}
             ]
-            results = classifier(conversation, padding=True, truncation=True, return_tensors="pt", padding_side='left')
+            results = classifier(conversation)
             last_response = results[-1]['content']
             st.write(f"**Answer**: {last_response}")
-    
