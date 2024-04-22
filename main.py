@@ -33,8 +33,6 @@ else:
     # If HF_HOME is not set, use the default location
     cache_directory = os.path.expanduser('~/.cache/huggingface/hub')
 
-st.markdown(os.listdir(cache_directory))
-
 #function to verify if model weights are already in cache
 def check_model_cache (model):
     if model in os.listdir(cache_directory):
