@@ -1,6 +1,6 @@
 streamlit == 1.37.0
 numpy == 1.26.4
-transformers == 4.38.1
+transformers == 4.48.0
 torch == 2.2.1
 tokenizers == 0.15.2
 huggingface-hub == 0.22.2
