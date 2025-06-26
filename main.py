@@ -115,7 +115,7 @@ if user_input != default_message:
         if task_type == 'Text Generation':
             #verify if the model is already in cache
             check_model_cache("models--gpt2")
-            classifier = pipeline("text-generation", model="gpt2", temperature=0.1, min_new_tokens=20, max_new_tokens=150)
+            classifier = pipeline("text-generation", model="gpt2", temperature=0.1, min_new_tokens=20, max_new_tokens=40)
 
             # max_length: Controls the maximum length of the generated text.
             # num_return_sequences: Specifies the number of generated sequences.
